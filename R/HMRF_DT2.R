@@ -371,7 +371,7 @@ GetDT.HMRFoutput = function(x){
 #' @name addHMRF2
 #' @description function to add HMRF Domain Type to cell meta data
 #' @keywords external
-addHMRF = 
+addHMRF2 = 
   function (gobject, HMRFoutput, k = NULL, betas_to_add = NULL 
             #, hmrf_name = NULL
             ) 
