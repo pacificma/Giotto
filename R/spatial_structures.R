@@ -353,30 +353,6 @@ create_spatialNetworkObject <- function(name = NULL,
 
 }
 
-#' @title select_spatialNetwork
-#' @name select_spatialNetwork
-#' @description function to select a spatial network
-#' @keywords internal
-select_spatialNetwork <- function(gobject,
-                                  name = NULL,
-                                  return_network_Obj = FALSE) {
-
-  if (!is.element(name, names(gobject@spatial_network))){
-    message = sprintf("spatial network %s has not been created. Returning NULL.
-                      check which spatial networks exist with showNetworks() \n", name)
-    warning(message)
-    return(NULL)
-  }else{
-    networkObj = gobject@spatial_network[[name]]
-    networkDT = networkObj$networkDT
-  }
-
-  if (return_network_Obj == TRUE){
-    return(networkObj)
-  }else{
-    return(networkDT)
-  }
-}
 
 
 #' @title calculate_distance_and_weight
@@ -1047,10 +1023,11 @@ create_delaunayNetwork3D <- function (gobject,
 #' @title createSpatialDelaunayNetwork
 #' @description Create a spatial Delaunay network based on cell centroid physical distances.
 #' @param gobject giotto object
+#' @param name name for spatial network (default = 'delaunay_network')
+#' @param spat_loc_name name of spatial locations
 #' @param method package to use to create a Delaunay network
 #' @param spat_loc_name name of spatial locations
 #' @param dimensions which spatial dimensions to use. Use "sdimx" (spatial dimension x), "sdimy", "sdimz" respectively to refer to X (or the 1st), Y (or the 2nd) and Z(or the 3rd) dimension, see details. (default = all)
-#' @param name name for spatial network (default = 'delaunay_network')
 #' @param maximum_distance distance cuttof for Delaunay neighbors to consider. If "auto", "upper wisker" value of the distance vector between neighbors is used; see the boxplot{graphics} documentation for more details.(default = "auto")
 #' @param minimum_k minimum number of neigbhours if maximum_distance != NULL
 #' @param options (geometry) String containing extra control options for the underlying Qhull command; see the Qhull documentation (../doc/qhull/html/qdelaun.html) for the available options. (default = 'Pp', do not report precision problems)
@@ -1064,10 +1041,10 @@ create_delaunayNetwork3D <- function (gobject,
 #' @details Creates a spatial Delaunay network as explained in \code{\link[geometry]{delaunayn}} (default), \code{\link[deldir]{deldir}}, or \code{\link[RTriangle]{triangulate}}.
 #' @export
 createSpatialDelaunayNetwork <- function(gobject,
-                                         method = c("deldir", "delaunayn_geometry", "RTriangle"),
-                                         spat_loc_name = 'raw',
-                                         dimensions = "all",
                                          name = "Delaunay_network",
+                                         spat_loc_name = NULL,
+                                         method = c("deldir", "delaunayn_geometry", "RTriangle"),
+                                         dimensions = "all",
                                          maximum_distance = "auto", # all
                                          minimum_k = 0, # all
                                          options = "Pp", # geometry
@@ -1373,10 +1350,10 @@ create_KNNnetwork_dbscan = function(spatial_locations,
 #' @title createSpatialKNNnetwork
 #' @description Create a spatial knn network.
 #' @param gobject giotto object
+#' @param name name for spatial network (default = 'spatial_network')
 #' @param method method to create kNN network
 #' @param spat_loc_name name of spatial locations
 #' @param dimensions which spatial dimensions to use (default = all)
-#' @param name name for spatial network (default = 'spatial_network')
 #' @param k number of nearest neighbors based on physical distance
 #' @param maximum_distance distance cuttof for nearest neighbors to consider for kNN network
 #' @param minimum_k minimum nearest neigbhours if maximum_distance != NULL
@@ -1395,7 +1372,7 @@ create_KNNnetwork_dbscan = function(spatial_locations,
 #' @export
 createSpatialKNNnetwork <- function (gobject,
                                      method = "dbscan",
-                                     spat_loc_name = 'raw',
+                                     spat_loc_name = NULL,
                                      dimensions = "all",
                                      name = "knn_network",
                                      k = 4,
@@ -1524,6 +1501,8 @@ createSpatialKNNnetwork <- function (gobject,
 #' @title createSpatialNetwork
 #' @description Create a spatial network based on cell centroid physical distances.
 #' @param gobject giotto object
+#' @param name name for spatial network (default = 'spatial_network')
+#' @param spat_loc_name name of spatial locations to use
 #' @param dimensions which spatial dimensions to use (default = all)
 #' @param method which method to use to create a spatial network. (default = Delaunay)
 #' @param delaunay_method Delaunay method to use
@@ -1532,7 +1511,6 @@ createSpatialKNNnetwork <- function (gobject,
 #' @param Y (RTriangle) If TRUE prohibits the insertion of Steiner points on the mesh boundary.
 #' @param j (RTriangle) If TRUE jettisons vertices that are not part of the final triangulation from the output.
 #' @param S (RTriangle) Specifies the maximum number of added Steiner points.
-#' @param name name for spatial network (default = 'spatial_network')
 #' @param knn_method method to create kNN network
 #' @param k number of nearest neighbors based on physical distance
 #' @param minimum_k minimum nearest neigbhours if maximum_distance != NULL
@@ -1552,6 +1530,7 @@ createSpatialKNNnetwork <- function (gobject,
 #' @export
 createSpatialNetwork <- function(gobject,
                                  name = NULL,
+                                 spat_loc_name = NULL,
                                  dimensions = "all",
                                  method = c('Delaunay', 'kNN'),
                                  delaunay_method = c("deldir", "delaunayn_geometry", "RTriangle"),
@@ -1580,6 +1559,7 @@ createSpatialNetwork <- function(gobject,
     knn_method = match.arg(knn_method,c("dbscan"))
 
     out = createSpatialKNNnetwork(gobject = gobject,
+                                  spat_loc_name = spat_loc_name,
                                   method = knn_method,
                                   dimensions = dimensions,
                                   k = k,
@@ -1597,6 +1577,7 @@ createSpatialNetwork <- function(gobject,
       name = paste0(method,"_","network")
     }
     out = createSpatialDelaunayNetwork(gobject=gobject,
+                                       spat_loc_name = spat_loc_name,
                                        method = delaunay_method,
                                        dimensions = dimensions,
                                        name = name,
@@ -2084,31 +2065,6 @@ createSpatialDefaultGrid <- function(gobject,
 
 }
 
-
-
-#' @title select_spatialGrid
-#' @description accessor function to select spatial grid
-#' @keywords internal
-select_spatialGrid <- function(gobject,
-                               name = NULL,
-                               return_grid_Obj = FALSE) {
-
-  if (!is.element(name, names(gobject@spatial_grid))){
-    message = sprintf("spatial grid %s has not been created. Returning NULL.
-                      check which spatial grids exist with showGrids() \n", name)
-    warning(message)
-    return(NULL)
-  }else{
-    gridObj = gobject@spatial_grid[[name]]
-    gridDT = gridObj$gridDT
-  }
-
-  if (return_grid_Obj == TRUE){
-    return(gridObj)
-  }else{
-    return(gridDT)
-  }
-}
 
 
 
